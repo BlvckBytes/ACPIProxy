@@ -14,7 +14,7 @@ Automatically generate the required OpenCore ACPI patches as well as a template 
 
 ## Usage
 
-There are two modes for this tool, nameley: `generate` and `undo`. `generate` will add the ACPI patches to your `config.plist` if not yet existing as well as create/update the matching SSDT, and `undo` will remove all changes made by ACPIProxy.
+There are two modes for this tool, nameley: `apply` and `undo`. `apply` will add the ACPI patches to your `config.plist` if not yet existing as well as create/update the matching SSDT, and `undo` will remove all changes made by ACPIProxy.
 
 ```bash
 python acpiproxy.py generate <Pattern> <Path-To-OC-Folder> <Path-To-DSDT.aml>
@@ -41,7 +41,7 @@ The path to your OC folder could look something like this: `/Volumes/EFI/EFI/OC`
 Let's see how one would proxy all EC Query methods. They have the format of: `_QXX`, where XX can be any two numbers. Thus, the pattern is: `_Q++`. An invocation would look the following:
 
 ```bash
-python acpiproxy.py generate '_Q++' /Volumes/EFI/EFI/OC /Users/blvckbytes/Desktop/origin/DSDT.aml
+python acpiproxy.py apply '_Q++' /Volumes/EFI/EFI/OC /Users/blvckbytes/Desktop/origin/DSDT.aml
 ```
 
 It will generate two parts, ACPI patches in `config.plist` under ACPI/Patch with an entry in ACPI/Add for the SSDT, as well as the SSDT in `/Volumes/EFI/EFI/OC/ACPI`, named like this: `SSDT-_Q++.aml`.
