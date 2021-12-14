@@ -38,18 +38,30 @@ The path to your OC folder could look something like this: `/Volumes/EFI/EFI/OC`
 
 ## Example
 
-Let's see how one would proxy all EC Query methods. They have the format of: `_QXX`, where XX can be any two numbers. Thus, the pattern is: `_Q++`. An invocation would look the following:
+Let's see how one would proxy all EC Query methods. They have the format of: `_QXX`, where XX can be any two numbers, or even just one number. Thus, the pattern is: `_Q+!`. An invocation would look the following:
 
 ```bash
-python acpiproxy.py apply '_Q++' /Volumes/EFI/EFI/OC /Users/blvckbytes/Desktop/origin/DSDT.aml
+python acpiproxy.py apply '_Q+!' /Volumes/EFI/EFI/OC /Users/blvckbytes/Desktop/origin/DSDT.aml
 ```
 
-It will generate two parts, ACPI patches in `config.plist` under ACPI/Patch with an entry in ACPI/Add for the SSDT, as well as the SSDT in `/Volumes/EFI/EFI/OC/ACPI`, named like this: `SSDT-_Q++.aml`.
+It will generate two parts, ACPI patches in `config.plist` under ACPI/Patch with an entry in ACPI/Add for the SSDT, as well as the SSDT in `/Volumes/EFI/EFI/OC/ACPI`, named like this: `SSDT-_Q+!.aml`.
 
 My DSDT only has a single EC query, which is why it makes for a pretty good example:
 
 ### Patches
 
+```
+Applying: SSDT-_Q+! _Q66 to XQ66: 14225F513636 -> 142258513636
+```
+
 ### Add
 
+```
+Adding: SSDT-_Q+!.aml
+```
+
 ### SSDT
+
+```
+Coming soon! :)
+```
