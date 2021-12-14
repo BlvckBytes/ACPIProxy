@@ -3,6 +3,10 @@ import re
 import os
 import subprocess
 from shutil import copy, which
+from plistlib import load, dump
+
+from acpipatch import ACPIPatch
+from util import hexbytes_to_ascii_name
 
 """
 Check that the required tool exists on the machine
@@ -170,7 +174,7 @@ Check if a single method declaration's name is
 matching the provided name pattern
 """
 def is_declaration_matching(declaration, pattern):
-  name = ''.join(list(map(lambda x: chr(int(x, 16)), declaration[-4:])))
+  name = hexbytes_to_ascii_name(declaration)
   return compile_custom_pattern(pattern).match(name)
 
 """
@@ -181,16 +185,37 @@ def filter_declarations(declarations, pattern):
   return list(filter(lambda x: is_declaration_matching(x, pattern), declarations))
 
 """
+Mark a byte-array containing an ACPI name
+as patched by using an X at a zero-based index (0-3)
+"""
+def mark_patched(byte_arr, ind):
+  res = byte_arr.copy()
+  res[len(byte_arr) - 4 + ind] = '58' # ASCII X
+  return res
+
+"""
+Check whether or not a list of resulting patches is unique
+"""
+def are_patches_unique(patches):
+  strpatches = list(map(lambda y: ''.join(y), patches))
+  return len(strpatches) == len(set(strpatches))
+
+"""
 Main entry point of the program
 """
 def main(args):
   # Has to have three args
-  if len(args) != 3:
-    print('Usage: acpiproxy.py <Pattern> <Path-To-OC-Folder> <Path-To-DSDT.aml>')
+  if len(args) != 4:
+    print('Usage: acpiproxy.py <apply/undo> <Pattern> <Path-To-OC-Folder> <Path-To-DSDT.aml>')
     sys.exit()
 
   # Destructure args into separate variables
-  pattern, oc, dsdt = args
+  action, pattern, oc, dsdt = args
+
+  # Action has to be valid
+  if action != 'apply' and action != 'undo':
+    print('Invalid action provided! Only use: apply,undo')
+    sys.exit()
 
   # Pattern has to be valid
   if not re.compile('[A-Z0-9_+!\-@?*]{4}').match(pattern):
@@ -218,9 +243,42 @@ def main(args):
   # Filter based on input mask
   declarations = filter_declarations(declarations, pattern)
 
+  # Try all possible indices to mark patching with an X
+  # until unique accross all items
+  patches = []
+  for x_ind in range(0, 3):
+    # Create case where all entries are patched at same index
+    case = list(map(lambda x: mark_patched(x, x_ind), declarations))
+
+    # If that's unique, save, try again otherwise
+    if are_patches_unique(case):
+      patches = case
+      break
+
+  # Convert to patch class instances
+  patches = [ACPIPatch(declarations[x], patches[x], pattern) for x in range(0, len(declarations))]
+
+  # Load plist, close file
+  plist = None
+  print('Reading plist...')
+  with open(os.path.join(oc, 'config.plist'), 'rb') as plist_input:
+    plist = load(plist_input)
+
   # Debug print
-  for x in declarations:
-    print(''.join([chr(int(c, 16)) for c in x[-4:]]) + ' (' + ''.join(x) + ')')
+  for patch in patches:
+    print(f'{"Applying" if action == "apply" else "Undoing"}: {patch.comment}: {patch.finds} -> {patch.replaces}')
+
+    # Apply
+    if action == 'apply':
+      patch.apply(plist)
+    # Undo
+    else:
+      patch.undo(plist)
+
+  # Write plist, close file
+  print('Writing plist...')
+  with open(os.path.join(oc, 'config.plist'), 'wb') as plist_output:
+    dump(plist, plist_output)
 
 # Invoke main function with cli args
 if __name__ == '__main__':
