@@ -17,7 +17,7 @@ Automatically generate the required OpenCore ACPI patches as well as a template 
 There are two modes for this tool, nameley: `apply` and `undo`. `apply` will add the ACPI patches to your `config.plist` if not yet existing as well as create/update the matching SSDT, and `undo` will remove all changes made by ACPIProxy.
 
 ```bash
-python acpiproxy.py generate <Pattern> <Path-To-OC-Folder> <Path-To-DSDT.aml>
+python acpiproxy.py apply <Pattern> <Path-To-OC-Folder> <Path-To-DSDT.aml>
 ```
 
 ```bash
