@@ -275,6 +275,34 @@ def main(args):
     else:
       patch.undo(plist)
 
+  # Create SSDT path from provided pattern
+  add_path = f'SSDT-{pattern}.aml'
+
+  # Search for existing target entry
+  adds = plist['ACPI']['Add']
+  tars = [x for x in adds if x['Path'] == add_path]
+  tar = tars[0] if len(tars) > 0 else None
+
+  # Apply
+  if action == 'apply':
+    print(f'Applying: {add_path}')
+
+    # Only apply if non existing
+    if tar == None:
+      adds.append({
+        'Comment': add_path,
+        'Enabled': True,
+        'Path': add_path
+      })
+
+  # Undo
+  else:
+    print(f'Undoing {add_path}')
+
+    # Only remove if existing
+    if tar != None:
+      adds.pop(adds.index(tar))
+
   # Write plist, close file
   print('Writing plist...')
   with open(os.path.join(oc, 'config.plist'), 'wb') as plist_output:
